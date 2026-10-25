@@ -65,17 +65,23 @@ python tools/benchmark_mst.py
 
 ## Kruskal vs. Prim benchmark
 
-The benchmark is implemented in `tools/benchmark_mst.py`. It builds each graph once and passes the exact same edge list to both methods. The graph generator uses `random.Random(20261025 + n)`, first adds a chain to ensure connectivity, then adds random non-self edges until `m = 3n`. We warmed up both methods on a separate 200-vertex graph. Compilation is excluded: Java classes are built before running the benchmark. The timer is Python `time.perf_counter_ns`; the measured boundary is JVM process launch through receiving and parsing the JSON result. Thus JVM startup and JSON input/output are included, and graph generation/compilation are excluded. Each entry below is one actual run, in milliseconds; medians are calculated from the three runs.
 
-Environment: Linux x86_64 container, OpenJDK 21.0.12.1 (compiled with `--release 17`), Python 3.13.5, 3 reported CPUs. Hardware and background load are virtualized/shared, so small timing differences should not be overinterpreted.
+The benchmark is implemented in `tools/benchmark_mst.py`. It builds each graph once and passes the exact same edge list to both algorithms. The graph generator uses `random.Random(20261025 + n)`, first adds a chain to ensure connectivity, then adds random non-self edges until `m = 3n`.
 
-| Vertices `n` | Edges `m` | Kruskal runs (ms) | Kruskal median (ms) | Prim runs (ms) | Prim median (ms) | MST cost |
+Both algorithms were warmed up on a separate graph before measurement. Compilation and graph generation are excluded. The timer is Python's `time.perf_counter_ns`. The measured boundary is from launching the Java process until receiving and parsing its JSON result. Therefore, JVM startup and JSON input/output are included. Each algorithm was measured three times, and the median was calculated from those three runs.
+
+**Environment:** Windows 11 (10.0.26300), Python 3.14.3, Java subprocess. The timer was `time.perf_counter_ns`. The seed base was `20261025`.
+
+| Vertices (n) | Edges (m) | Kruskal runs (ms) | Kruskal median (ms) | Prim runs (ms) | Prim median (ms) | MST cost |
 |---:|---:|---|---:|---|---:|---:|
-| 1,000 | 3,000 | 94.462, 149.563, 94.866 | 94.866 | 133.112, 97.143, 92.786 | 97.143 | -609,673 |
-| 5,000 | 15,000 | 178.996, 190.255, 161.112 | 178.996 | 151.459, 146.788, 175.136 | 151.459 | -3,083,793 |
-| 12,000 | 36,000 | 185.927, 215.716, 204.881 | 204.881 | 285.682, 286.243, 219.859 | 285.682 | -7,435,282 |
+| 1,000 | 3,000 | 109.964; 114.746; 111.603 | 111.603 | 107.565; 106.872; 104.693 | 106.872 | -609,673 |
+| 5,000 | 15,000 | 150.852; 142.990; 138.482 | 142.990 | 144.763; 139.327; 132.704 | 139.327 | -3,083,793 |
+| 12,000 | 36,000 | 174.819; 172.885; 166.730 | 172.885 | 171.250; 176.408; 178.701 | 176.408 | -7,435,282 |
 
-Both methods returned the same cost for each identical graph, and the benchmark verified that each result was a connected spanning tree with `n-1` selected edges. The observed winner varies by size, and process startup, garbage collection and shared-container noise are visible in the spread. These measurements are not a substitute for the asymptotic analysis: both methods use sorting/priority-queue operations and are expected to scale approximately as `O(n + m log m)` here.
+Both algorithms returned the same MST cost for each identical graph. The benchmark also verified that each result was a connected spanning tree containing exactly `n - 1` selected edges.
+
+The measurements include Java process startup and JSON input/output, so they should not be interpreted as pure algorithm execution time. Small timing differences may also be affected by background processes and system load.
+
 
 ## Sources and AI assistance
 
